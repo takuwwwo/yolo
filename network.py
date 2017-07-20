@@ -22,6 +22,9 @@ IMAGE_SIZE = 448
 
 FLAGS = None
 
+def ReLU(x):
+    return tf.add(tf.nn.relu(tf.scalar_multiply(0.9, x)), tf.scalar_multiply(0.1, x))
+
 def deepnn(x):
     # The number of channels in each layers
     conv1channel = 64
@@ -107,10 +110,70 @@ def inference(images,
     Returns:
         ReLU_like : Output inference network
     """
+    with tf.variable_scope('conv1') as scope:
+        weights = tools.weight_variables([7, 7, 1, conv1channel])
+        biases = tools.bias_variable([conv1channel])
+        conv1 = ReLU(tools.conv2d(x_image, weights) + biases)
+    pool1 = tools.max_pool_2x2(conv1)
+
+    with tf.variable_scope('conv2') as scope:
+        weights = tools.weight_variables([3, 3, conv1channel, conv2channel])
+        biases = tools.bias_variable([conv2channel])
+        conv2 = ReLU(tools.conv2d(pool1, weights) + biases)
+    pool2 = tools.max_pool_2x2(conv2)
+
+    with tf.variable_scope('conv3') as scope:
+        weights = tools.weight_variables([3, 3, conv2channel, conv3channel])
+        biases = tools.bias_variable([conv3channel])
+        conv3 = ReLU(tools.conv2d(pool2, weights) + biases)
+    pool3 = tools.max_pool_2x2(conv3)
+
+    with tf.variable_scope('conv4') as scope:
+        weights = tools.weight_variables([3, 3, conv3channel, conv4channel])
+        biases = tools.bias_variable([conv4channel])
+        conv4 = ReLU(tools.conv2d(pool3, weights) + biases)
+    pool4 = tools.max_pool_2x2(conv4)
+
+    with tf.variable_scope('conv5') as scope:
+        weights = tools.weight_variables([3, 3, conv4channel, conv5channel])
+        biases = tools.bias_variable([conv5channel])
+        conv5 = ReLU(tools.conv2d(pool4, weights) + biases)
+    pool5 = tools.max_pool_2x2(conv5)
+
+    with tf.variable_scope('conv6') as scope:
+        weights = tools.weight_variables([3, 3, conv5channel, conv6channel])
+        biases = tools.bias_variable([conv6channel])
+        conv6 = ReLU(tools.conv2d(pool5, weights) + biases)
+    pool6 = tools.max_pool_2x2(conv6)
+
+    with tf.variable_scope('fc1') as scope:
+        weights = tools.weight_variables([7*7*conv6_channel fc1_length])
+        biases = tools.bias_variable([fc1_length])
+        flat = tf.reshape(pool6, [-1, 7*7*conv6_channel])
+        fc1 = ReLU(tf.matmul(flat, weights) + biases)
+
+
+    keep_prob = tf.placeholder(tf.float32)
+    fc1_drop = tf.nn.dropout(fc1, keep_prob)
+
+    with tf.variable_scope('fc2') as scope:
+        weights = tools.weight_variables([fc1_length, S*S*last_output])
+        biases = tools.bias_variable([S*S*last_output])
+        y = tf.reshape(tf.matmul(fc1_drop, weights) + biases, [S, S, last_output])
+
+    return y
+
+def loss(logits, labels, obj, noobj):
+    # determine hyperparameter
+    l_obj = 5.0; l_noobj = 0.5
+    
 
 
 
+    x, y, w, h, C = 0, 1, 2, 3, 4; p = [5, 6]
+    logits[w] = tf.sqrt(logits[w]); labels[w] = tf.sqrt(labels[w])
 
-    return 1
+
+
 
 print(inference(1,2,3,4,5,6,7,8,9))
