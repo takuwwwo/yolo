@@ -17,6 +17,9 @@ S = 7
 # The number of obejects which can be detected in a cell
 B = 1
 
+# Last output size
+last_output = B*5 + C
+
 # The input images should be resized to 448*448
 IMAGE_SIZE = 448
 
@@ -163,15 +166,38 @@ def inference(images,
 
     return y
 
-def loss(logits, labels, obj, noobj):
-    # determine hyperparameter
-    l_obj = 5.0; l_noobj = 0.5
-    
-
-
+def loss(logits, labels, obj, noobj, l_obj = 5.0, l_noobj = 0.5):
+    """
+    args:
+        logits: Logits tensor, float - [x, y, w, h. C, p[2]]
+        labels: Labels tensor, float - [x, y, w, h. C, p[2]]
+        obj: matrix showing whether an object exists in the cell or not
+        noobj: matrix showing whether an object doesn't exist in the cell or not
+        l_obj, l_noobj: hyper parameter
+    """
 
     x, y, w, h, C = 0, 1, 2, 3, 4; p = [5, 6]
-    logits[w] = tf.sqrt(logits[w]); labels[w] = tf.sqrt(labels[w])
+    l1 = l_obj * tf.reduce_sum(obj *
+                               (tf.square((logits[x] - labels[x])) +
+                                tf.square((logits[y] - labels[y]))))
+
+    l2 = l_obj * tf.reduce_sum(obj *
+                               (tf.square((tf.sqrt(logits[w]) - tf.sqrt(labels[w]))) +
+                                tf.square((tf.sqrt(logits[h]) - tf.sqrt(labels[h])))))
+
+    l3 = tf.reduce_sum(obj *
+                       tf.square(logits[C] - labels[C]))
+
+    l4 = l_noobj * tf.reduce_sum(noobj *
+                                 (tf.square(logits[C] - labels[C])))
+
+    l5 = tf.reduce_sum(obj*
+                       tf.reduce_sum(tf.square(logits[p] - labels[p]), axis = 0))
+
+    return l1 + l2 + l3 + l4 + l5
+
+
+
 
 
 
