@@ -25,7 +25,7 @@ IMAGE_SIZE = 448
 
 FLAGS = None
 
-def ReLU(x):
+def yolorelu(x):
     return tf.add(tf.nn.relu(tf.scalar_multiply(0.9, x)), tf.scalar_multiply(0.1, x))
 
 def deepnn(x):
@@ -100,9 +100,7 @@ def deepnn(x):
     return y_conv, keep_prob
 
 
-def inference(images,
-              hidden1_units, hidden2_units, hidden3_units, hidden4_units,
-              hidden5_units, hidden6_units, hidden7_units, hidden8_units):
+def inference(images):
     """
     Builds the rectangle detecting model
 
@@ -166,7 +164,7 @@ def inference(images,
 
     return y
 
-def loss(logits, labels, obj, noobj, l_obj = 5.0, l_noobj = 0.5):
+def loss(logits, labels, obj, noobj, l_obj = 5.0, l_noobj = 0.5): #TODO: confirm
     """
     args:
         logits: Logits tensor, float - [x, y, w, h. C, p[2]]
@@ -195,6 +193,34 @@ def loss(logits, labels, obj, noobj, l_obj = 5.0, l_noobj = 0.5):
                        tf.reduce_sum(tf.square(logits[p] - labels[p]), axis = 0))
 
     return l1 + l2 + l3 + l4 + l5
+
+def training(loss, learning_rate):
+    """
+    Args:
+        loss: Loss value
+        learning_rate: learning rate
+
+    """
+
+    # Create a variable to track the global step
+    global_step = tf.Variable(0, name='global_step', trainable=False)
+
+    # Add a scalar summary for the snapshot loss.
+    tf.summary.scalar('loss', loss)
+
+    # Create the gradient descent optimizer with the given learning rate
+    opt = tf.train.AdamOptimizer(learning_rate)
+    grads = opt.compute_gradients(loss)
+
+    # Apply gradients
+    optimizer = opt.apply_gradients(grads, global_step=global_step)
+
+    return optimizer
+
+
+
+
+
 
 
 
