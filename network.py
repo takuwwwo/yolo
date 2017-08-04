@@ -106,52 +106,60 @@ def inference(images):
 
     Args:
         images: Images placeholder, from inputs()
-        hidden(n)_units: Size of the nth hidden layer
 
     Returns:
         ReLU_like : Output inference network
     """
+    x_image = images.reshape(-1, IMAGE_SIZE, IMAGE_SIZE, 1)
+    conv1channel = 64
+    conv2channel = 64
+    conv3channel = 128
+    conv4channel = 256
+    conv5channel = 256
+    conv6channel = 256
+    fc1_length = 1024
+
     with tf.variable_scope('conv1') as scope:
         weights = tools.weight_variables([7, 7, 1, conv1channel])
         biases = tools.bias_variable([conv1channel])
-        conv1 = ReLU(tools.conv2d(x_image, weights) + biases)
+        conv1 = yolorelu(tools.conv2d(x_image, weights) + biases)
     pool1 = tools.max_pool_2x2(conv1)
 
     with tf.variable_scope('conv2') as scope:
         weights = tools.weight_variables([3, 3, conv1channel, conv2channel])
         biases = tools.bias_variable([conv2channel])
-        conv2 = ReLU(tools.conv2d(pool1, weights) + biases)
+        conv2 = yolorelu(tools.conv2d(pool1, weights) + biases)
     pool2 = tools.max_pool_2x2(conv2)
 
     with tf.variable_scope('conv3') as scope:
         weights = tools.weight_variables([3, 3, conv2channel, conv3channel])
         biases = tools.bias_variable([conv3channel])
-        conv3 = ReLU(tools.conv2d(pool2, weights) + biases)
+        conv3 = yolorelu(tools.conv2d(pool2, weights) + biases)
     pool3 = tools.max_pool_2x2(conv3)
 
     with tf.variable_scope('conv4') as scope:
         weights = tools.weight_variables([3, 3, conv3channel, conv4channel])
         biases = tools.bias_variable([conv4channel])
-        conv4 = ReLU(tools.conv2d(pool3, weights) + biases)
+        conv4 = yolorelu(tools.conv2d(pool3, weights) + biases)
     pool4 = tools.max_pool_2x2(conv4)
 
     with tf.variable_scope('conv5') as scope:
         weights = tools.weight_variables([3, 3, conv4channel, conv5channel])
         biases = tools.bias_variable([conv5channel])
-        conv5 = ReLU(tools.conv2d(pool4, weights) + biases)
+        conv5 = yolorelu(tools.conv2d(pool4, weights) + biases)
     pool5 = tools.max_pool_2x2(conv5)
 
     with tf.variable_scope('conv6') as scope:
         weights = tools.weight_variables([3, 3, conv5channel, conv6channel])
         biases = tools.bias_variable([conv6channel])
-        conv6 = ReLU(tools.conv2d(pool5, weights) + biases)
+        conv6 = yolorelu(tools.conv2d(pool5, weights) + biases)
     pool6 = tools.max_pool_2x2(conv6)
 
     with tf.variable_scope('fc1') as scope:
         weights = tools.weight_variables([7*7*conv6_channel fc1_length])
         biases = tools.bias_variable([fc1_length])
         flat = tf.reshape(pool6, [-1, 7*7*conv6_channel])
-        fc1 = ReLU(tf.matmul(flat, weights) + biases)
+        fc1 = yolorelu(tf.matmul(flat, weights) + biases)
 
 
     keep_prob = tf.placeholder(tf.float32)
@@ -199,7 +207,6 @@ def training(loss, learning_rate):
     Args:
         loss: Loss value
         learning_rate: learning rate
-
     """
 
     # Create a variable to track the global step
